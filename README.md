@@ -27,20 +27,33 @@ and initialize
 export PATH=/opt/cactus/bin/uhal/tools:$PATH LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH
 ```
 1. Follow instructions at https://gitlab.cern.ch/p2-xware/firmware/emp-fwk
-In particular, setup the work area
+In particular, install ipbb a
+```bash
+curl -L https://github.com/ipbus/ipbb/archive/dev/2021j.tar.gz | tar xvz
+source ipbb-dev-2021j/env.sh
+```
+and setup the work area (using ssh instead of https)
 ```bash
 ipbb init p2fwk-work
 cd p2fwk-work
-ipbb add git https://:@gitlab.cern.ch:8443/p2-xware/firmware/emp-fwk.git
-ipbb add git https://gitlab.cern.ch/ttc/legacy_ttc.git -b v2.1
-ipbb add git https://:@gitlab.cern.ch:8443/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
-ipbb add git https://gitlab.cern.ch/HPTD/tclink.git -r fda0bcf
-ipbb add git https://github.com/ipbus/ipbus-firmware -b v1.9
+ipbb add git ssh://git@gitlab.cern.ch:7999/p2-xware/firmware/emp-fwk.git
+ipbb add git ssh://git@gitlab.cern.ch:7999/ttc/legacy_ttc.git -b v2.1
+ipbb add git ssh://git@gitlab.cern.ch:7999/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
+ipbb add git ssh://git@gitlab.cern.ch:7999/HPTD/tclink.git -r fda0bcf
+ipbb add git git@github.com:ipbus/ipbus-firmware.git -b v1.9
 ```
-Then create the 'null algo' pass-through project
+1. Then create the 'null algo' pass-through project
 ```bash
 ipbb proj create vivado vcu118_null_algo emp-fwk:projects/examples/vcu118 top.dep
 cd proj/vcu118_null_algo
+```
+1. Setup, build and package the bitfile
+Note: For the following commands, you need to ensure that can find & use the `gen_ipbus_addr_decode` script (i.e. needs uHAL added to your PATH from previous step). Run the following IPBB commands:
+```bash
+ipbb ipbus gendecoders
+ipbb vivado generate-project
+ipbb vivado synth -j4 impl -j4
+ipbb vivado package
 ```
 
 ## Correlator layer 2 jet algo instructions
