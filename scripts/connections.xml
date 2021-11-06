@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<connections>
+    <connection id="vcu118"       uri="ipbuspcie-2.0:///dev/xdma0_h2c_0,/dev/xdma0_c2h_0" address_table="file:///root/p2fwk-work/proj/vcu118_null_algo/package/src/addrtab/top_emp.xml" />
+</connections>
+    
