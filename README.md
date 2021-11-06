@@ -85,19 +85,21 @@ ipbb vivado resource-usage
 |   ttc      |          emp_ttc |   645(0.05%) |   637(0.05%) |    0(0.00%) |   8(0.01%) |   797(0.03%) |   1(0.05%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
 
 6. Copy `vcu118_null_algo` project folder to machine with FPGA and launch `vivado_lab`. Open the Hardware Manager > Open Target > Auto connect > Program device > Navigate to bit file in `proj/vcu118_null_algo/package/src/vcu118_null_algo.bit` > Click OK. This will program the null algo bitfile. You can close it now.
-```
+```bash
 /home/xilinx/Vivado_Lab/2019.1/settings64.sh
 vivado_lab
 ```
 7. Make sure empbutler is setup (https://gitlab.cern.ch/p2-xware/software/emp-toolbox)
-```
+```bash
 export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH
 export PATH=/opt/cactus/bin/emp:$PATH
 source emp-toolbox/src/env.sh
 empbutler --help
 ```
-8. To run a test with random patterns run
-```
+8. To run a test with random patterns, run
+```bash
+cd VCU118/scripts
+source pcie_reconnect_xilinx.sh
 source pattern_file_test.sh /path/to/vcu118_null_algo
 ```
 This will make random input patterns stored in `data/tx_summary.txt` that look like:
