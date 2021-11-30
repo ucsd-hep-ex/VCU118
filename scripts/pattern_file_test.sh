@@ -1,5 +1,4 @@
 # Setup paths
-path=$1
 cfile=connections.xml
 fpga=vcu118
 

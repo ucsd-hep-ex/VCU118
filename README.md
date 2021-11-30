@@ -1,99 +1,28 @@
 # VCU118
 
-## General setup
-1. Install and setup Vivado 2019.1 on a machine for compiling firmware (like `prp-gpu-1.t2.ucsd.edu`).
-2. Install and setup Vivado Lab 2019.1 on a machine to be connected to the VCU118 via PCIe (like `scully.physics.ucsd.edu`).
-3. Connect board according to [xtp449-vcu118-setup-c-2019-1.pdf](example_designs/xtp449-vcu118-setup-c-2019-1.pdf).
-
-## Optional tests 
-1. Built-in self-test (BIST): Read and follow the instructions in [xtp453-vcu118-quickstart.pdf](user_guides/xtp453-vcu118-quickstart.pdf) to complete the built-in self test (BIST).
-2. Built-in test (BIT): Read and follow the instructions in [xtp439-vcu118-bit-c-2019-1.pdf](example_designs/xtp439-vcu118-bit-c-2019-1). Note this requires Windows (skip for now).
-3. IBERT: Read and follow the instructions in [xtp440-vcu118-gt-ibert-c-2019-1.pdf](example_designs/xtp440-vcu118-gt-ibert-c-2019-1.pdf) to test transceivers. In particular, you'll need [rdf0388-vcu118-gt-ibert-c-2019-1.zip](https://www.xilinx.com/support/documentation/boards_and_kits/vcu118/2019_1/rdf0388-vcu118-gt-ibert-c-2019-1.zip), which is easiest to get with `wget` (for some reason downloading in a browser fails consistently). See also https://blog.samtec.com/post/xilinx-blog-firefly-vcu118-fpga/.
-4. IP integrator: Read and follow the instructions in [xtp441-vcu118-ipi-c-2019-1.pdf](example_designs/xtp441-vcu118-ipi-c-2019-1.pdf). In particular, you'll need [rdf0389-vcu118-ipi-c-2019-1.zip](https://www.xilinx.com/support/documentation/boards_and_kits/vcu118/2019_1/rdf0389-vcu118-ipi-c-2019-1.zip).
-5. MIG instructions: Read and follow instructions in [xtp442-vcu118-mig-c-2019-1.pdf](example_designs/xtp442-vcu118-mig-c-2019-1.pdf). In particular, you'll need [rdf0390-vcu118-mig-c-2019-1.zip](https://www.xilinx.com/support/documentation/boards_and_kits/vcu118/2019_1/rdf0390-vcu118-mig-c-2019-1.zip).
-
-## Setup PCIe 
-1. Install XDMA drivers (clone and follow instructions in: https://github.com/Xilinx/dma_ip_drivers/tree/master/XDMA/linux-kernel). For Centos8, we needed this patch: https://github.com/Xilinx/dma_ip_drivers/pull/114
-1. Follow instructions in [xtp444-vcu118-pcie-c-2019-1.pdf](example_designs/xtp444-vcu118-pcie-c-2019-1.pdf). In particular, you'll need to build the PCIe firmware, 
-2. Sioni nicely provided the pre-made Vivado project and bit file here: https://cernbox.cern.ch/index.php/s/YcgLBsVhCELekvc, which can be programmed on the FPGA with
-```bash
-vivado_lab -mode batch -source program_spi_vcu118.tcl
+## Quickstart (`emp-fwk` 'null algo' instructions)
+1. Login with X11 forwarding enabled
 ```
-3. Now you should be able to see the FPGA over the PCIe
-```bash
-lspci -vv -d 10EE:
+ssh -Y <username>@scully.physics.ucsd.edu
 ```
-
-## `emp-fwk` 'null algo' instructions
-1. Get added to `cms-tcds2-users` and `emp-fwk-users` e-groups to view GitLab repositories.
-2. Install uHAL and ControlHub. Follow instructions at https://ipbus.web.cern.ch/doc/user/html/software/install/yum.html
-and initialize
+2. For many steps, root access is necessary. So set up the environment as follows:
 ```bash
-export PATH=/opt/cactus/bin/uhal/tools:$PATH LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH
+sudo xauth add $(xauth -f ~woodson/.Xauthority list|tail -1)
+sduo bash
+source /home/users/woodson/setup.sh
 ```
-3. Follow instructions at https://gitlab.cern.ch/p2-xware/firmware/emp-fwk
-In particular, install ipbb a
+3. Program the FPGA. First launch `vivado_lab` (with root acess)
 ```bash
-curl -L https://github.com/ipbus/ipbb/archive/dev/2021j.tar.gz | tar xvz
-source ipbb-dev-2021j/env.sh
-```
-and setup the work area (using ssh instead of https)
-```bash
-ipbb init p2fwk-work
-cd p2fwk-work
-ipbb add git ssh://git@gitlab.cern.ch:7999/p2-xware/firmware/emp-fwk.git
-ipbb add git ssh://git@gitlab.cern.ch:7999/ttc/legacy_ttc.git -b v2.1
-ipbb add git ssh://git@gitlab.cern.ch:7999/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
-ipbb add git ssh://git@gitlab.cern.ch:7999/HPTD/tclink.git -r fda0bcf
-ipbb add git git@github.com:ipbus/ipbus-firmware.git -b v1.9
-```
-4. Then create the 'null algo' pass-through project
-```bash
-ipbb proj create vivado vcu118_null_algo emp-fwk:projects/examples/vcu118 top.dep
-cd proj/vcu118_null_algo
-```
-5. Setup, build and package the bitfile
-Note: For the following commands, you need to ensure that can find & use the `gen_ipbus_addr_decode` script (i.e. needs uHAL added to your PATH from previous step). Run the following IPBB commands:
-```bash
-ipbb ipbus gendecoders
-ipbb vivado generate-project
-ipbb vivado synth -j4 impl -j4
-ipbb vivado package
-```
-You can check resources with:
-```bash
-ipbb vivado resource-usage
-```
-|  Instance  |      Module      |  Total LUTs  |  Logic LUTs  |   LUTRAMs   |    SRLs    |      FFs     |   RAMB36   |   RAMB18  |   URAM   | DSP48 Blocks |
-|------------|------------------|--------------|--------------|-------------|------------|--------------|------------|-----------|----------|--------------|
-| top        |            (top) | 26326(2.23%) | 24163(2.04%) | 1754(0.30%) | 409(0.07%) | 75827(3.21%) | 112(5.19%) | 64(1.48%) | 0(0.00%) |     0(0.00%) |
-|   (top)    |            (top) |     1(0.01%) |     1(0.01%) |    0(0.00%) |   0(0.00%) |     0(0.00%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-|   ctrl     |         emp_ctrl |     1(0.01%) |     1(0.01%) |    0(0.00%) |   0(0.00%) |    32(0.01%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-|   datapath |     emp_datapath | 12606(1.07%) | 12220(1.03%) |    0(0.00%) | 386(0.07%) | 18553(0.78%) |  16(0.74%) | 64(1.48%) | 0(0.00%) |     0(0.00%) |
-|   fabric   | ipbus_fabric_sel |    66(0.01%) |    66(0.01%) |    0(0.00%) |   0(0.00%) |     0(0.00%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-|   info     |         emp_info |   306(0.03%) |   306(0.03%) |    0(0.00%) |   0(0.00%) |   268(0.01%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-|   infra    |   emp_infra_pcie | 12703(1.07%) | 10934(0.92%) | 1754(0.30%) |  15(0.01%) | 15977(0.68%) |  95(4.40%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-|   payload  |      emp_payload |     0(0.00%) |     0(0.00%) |    0(0.00%) |   0(0.00%) | 40200(1.70%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-|   ttc      |          emp_ttc |   645(0.05%) |   637(0.05%) |    0(0.00%) |   8(0.01%) |   797(0.03%) |   1(0.05%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
-
-6. Copy `vcu118_null_algo` project folder to machine with FPGA and launch `vivado_lab`. Open the Hardware Manager > Open Target > Auto connect > Program device > Navigate to bit file in `proj/vcu118_null_algo/package/src/vcu118_null_algo.bit` > Click OK. This will program the null algo bitfile. You can close it now.
-```bash
-/home/xilinx/Vivado_Lab/2019.1/settings64.sh
 vivado_lab
 ```
-7. Make sure `empbutler` is setup (https://gitlab.cern.ch/p2-xware/software/emp-toolbox). Note needed to remove this line string encoding line https://gitlab.cern.ch/p2-xware/software/emp-toolbox/-/blob/master/python/pkg/emp/cmds/datapath.py#L71: may be a Python 2 vs. 3 issue
-```bash
-export LD_LIBRARY_PATH=/opt/cactus/lib:$LD_LIBRARY_PATH
-export PATH=/opt/cactus/bin/emp:$PATH
-source emp-toolbox/src/env.sh
-empbutler --help
-```
-8. To run a test with random patterns, run
+Open the Hardware Manager > Open Target > Auto connect > Program device > Navigate to bit file in `/home/users/woodson/p2fwk-work/proj/vcu118_null_algo/package/src/vcu118_null_algo.bit` > Click OK. This will program the null algo bitfile. You can close the GUI now.
+4. To run a test with random patterns, run
 ```bash
 cd VCU118/scripts
 source pcie_reconnect_xilinx.sh
-source pattern_file_test.sh /path/to/vcu118_null_algo
+source pattern_file_test.sh
 ```
+Note the `connections.xml` has hardcoded the path to the null algo: `/home/users/woodson/p2fwk-work/proj/vcu118_null_algo`
 This will make random input patterns stored in `data/tx_summary.txt` that look like:
 ```
 Board vcu118
@@ -124,5 +53,55 @@ Frame 0010 : 1v9382bf9065e908c6 1v9776a602d9b56da8 1v0754060c8cb0c07b 1vfc954fd0
 Note the first 7 frames have a data valid bit (first bit) equal to 0 meaning its not valid data. After that, the valid bit is always 1 and you can see the output matches the input.
 
 
-## Correlator layer 2 jet algo instructions
-1. See https://github.com/thesps/GlobalCorrelator/tree/layer2-interleaving/emp_examples/Layer2/standalones/firmware
+## Rebuilding the firmware
+First set up a working area on a machine for compiling firmware like `prp-gpu-1.t2.ucsd.edu`.
+Note use the `/scratch/data/$USER` area instead of your home directory due to disk space constraints.
+Then follow these instructions
+
+1. Get added to `cms-tcds2-users` and `emp-fwk-users` CERN e-groups to view GitLab repositories.
+2. To setup environment with Vivado 2019.1 and other software, do
+```bash
+source /scratch/data/setup_emp.sh
+```
+2. Make sure uHAL and ControlHub are installed. If not, follow instructions at https://ipbus.web.cern.ch/doc/user/html/software/install/yum.html
+3. Make sure `ipbb` is installed and set up. If not, follow instructions at https://gitlab.cern.ch/p2-xware/firmware/emp-fwk
+4. Setup the work area (using ssh instead of https)
+```bash
+ipbb init p2fwk-work
+cd p2fwk-work
+ipbb add git ssh://git@gitlab.cern.ch:7999/p2-xware/firmware/emp-fwk.git
+ipbb add git ssh://git@gitlab.cern.ch:7999/ttc/legacy_ttc.git -b v2.1
+ipbb add git ssh://git@gitlab.cern.ch:7999/cms-tcds/cms-tcds2-firmware.git -b v0_1_1
+ipbb add git ssh://git@gitlab.cern.ch:7999/HPTD/tclink.git -r fda0bcf
+ipbb add git git@github.com:ipbus/ipbus-firmware.git -b v1.9
+```
+4. Create the 'null algo' pass-through project
+```bash
+ipbb proj create vivado vcu118_null_algo emp-fwk:projects/examples/vcu118 top.dep
+cd proj/vcu118_null_algo
+```
+5. Setup, build and package the bitfile
+Note: For the following commands, you need to ensure that can find & use the `gen_ipbus_addr_decode` script (i.e. needs uHAL added to your PATH from previous step). Run the following IPBB commands:
+```bash
+ipbb ipbus gendecoders
+ipbb vivado generate-project
+ipbb vivado synth -j4 impl -j4
+ipbb vivado package
+```
+You can check resources with:
+```bash
+ipbb vivado resource-usage
+```
+|  Instance  |      Module      |  Total LUTs  |  Logic LUTs  |   LUTRAMs   |    SRLs    |      FFs     |   RAMB36   |   RAMB18  |   URAM   | DSP48 Blocks |
+|------------|------------------|--------------|--------------|-------------|------------|--------------|------------|-----------|----------|--------------|
+| top        |            (top) | 26326(2.23%) | 24163(2.04%) | 1754(0.30%) | 409(0.07%) | 75827(3.21%) | 112(5.19%) | 64(1.48%) | 0(0.00%) |     0(0.00%) |
+|   (top)    |            (top) |     1(0.01%) |     1(0.01%) |    0(0.00%) |   0(0.00%) |     0(0.00%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+|   ctrl     |         emp_ctrl |     1(0.01%) |     1(0.01%) |    0(0.00%) |   0(0.00%) |    32(0.01%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+|   datapath |     emp_datapath | 12606(1.07%) | 12220(1.03%) |    0(0.00%) | 386(0.07%) | 18553(0.78%) |  16(0.74%) | 64(1.48%) | 0(0.00%) |     0(0.00%) |
+|   fabric   | ipbus_fabric_sel |    66(0.01%) |    66(0.01%) |    0(0.00%) |   0(0.00%) |     0(0.00%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+|   info     |         emp_info |   306(0.03%) |   306(0.03%) |    0(0.00%) |   0(0.00%) |   268(0.01%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+|   infra    |   emp_infra_pcie | 12703(1.07%) | 10934(0.92%) | 1754(0.30%) |  15(0.01%) | 15977(0.68%) |  95(4.40%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+|   payload  |      emp_payload |     0(0.00%) |     0(0.00%) |    0(0.00%) |   0(0.00%) | 40200(1.70%) |   0(0.00%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+|   ttc      |          emp_ttc |   645(0.05%) |   637(0.05%) |    0(0.00%) |   8(0.01%) |   797(0.03%) |   1(0.05%) |  0(0.00%) | 0(0.00%) |     0(0.00%) |
+
+6. Copy `vcu118_null_algo` project folder to machine with FPGA (`scully.physics.ucsd.edu`) and follow the instructions above.
