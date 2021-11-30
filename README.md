@@ -7,7 +7,7 @@ ssh -Y <username>@scully.physics.ucsd.edu
 ```
 2. For many steps, root access is necessary. So set up the environment as follows:
 ```bash
-sudo xauth add $(xauth -f ~woodson/.Xauthority list|tail -1)
+sudo xauth add $(xauth -f /home/users/${USER}/.Xauthority list|tail -1)
 sduo bash
 source /home/users/woodson/setup.sh
 ```
