@@ -9,7 +9,7 @@ ssh -Y <username>@scully.physics.ucsd.edu
 ```bash
 sudo xauth add $(xauth -f /home/users/${USER}/.Xauthority list|tail -1)
 sduo bash
-source /home/users/woodson/setup.sh
+source /home/users/woodson/setup_emp.sh
 ```
 3. Program the FPGA. First launch `vivado_lab` (with root acess)
 ```bash
