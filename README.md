@@ -8,7 +8,7 @@ ssh -Y <username>@scully.physics.ucsd.edu
 2. For many steps, root access is necessary. So set up the environment as follows:
 ```bash
 sudo xauth add $(xauth -f /home/users/${USER}/.Xauthority list|tail -1)
-sduo bash
+sudo bash
 source /home/users/woodson/setup_emp.sh
 ```
 3. Program the FPGA. First launch `vivado_lab` (with root acess)
